@@ -1,0 +1,51 @@
+name: CICD Workflow
+on: push
+env:
+  APP: twoge
+
+jobs:
+  Build-And-Deploy:
+    runs-on: ubuntu-latest
+    environment: Global
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DHU }}
+          password: ${{ secrets.DHT }}
+
+      - name: Build/Push To DockerHub
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: ${{ secrets.DHU }}/${{ env.APP }}:${{ github.ref_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.4
+
+      - name: Install Elastic Beanstalk CLI
+        run: pip install awsebcli --upgrade
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Initialize Elastic Beanstalk Environment
+        run: |
+          chmod +x eb-init.sh
+          ./eb-init.sh
+
+      - name: Create Env/Deploy App to AWS
+        run: |
+          eb create ${{ env.APP }}-${{ github.ref_name }} --single --envvars "DATABASE_URI=${{ secrets.RDS_DB }}"

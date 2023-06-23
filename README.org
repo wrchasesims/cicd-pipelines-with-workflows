@@ -1,0 +1,91 @@
+#+title: Deployment Pipelines with GitHub Workflows
+
+* Overview
+GitHub (GH) has an awesome set of tools called 'actions' which we can combine to automate tons of things - like linting/spellchecking, executing scripts, checking out a github repository, creating a docker image etc. Not super exciting by themselves but with their powers combined we can build 'workflows' to do some amazing things.
+
+"Such as?" You might ask.
+
+I dunno, how about... MAKE A WEBAPP THAT DEPLOYS ITSELF TO AWS ELASTIC BEANSTALK???
+
+* Why Adopt This Approach?
+If you already use GH as your version control go-to, workflows is a no-brainer. They're an easy, widely-used tool in the Continuous Integration/Continuous Deployment (CICD) Toolbox. Some ways they help:
+  - Massively simplify a string of processes that take forever to do manually.
+  - Seamless integration - if you can do it on a unix-like system, you can do it in a workflow.
+  - There are MANY 'actions' on GH you can use right now, and you can even make your own.
+  - Codify infrastructure/pipelines.
+  - Build processes that are consistent, reusable & flexible.
+  - Stay DRY (Don't Repeat Yourself).
+
+Automating will save you tons of time in the future. If you find yourself frequently doing a particular task, AUTOMATE IT! #TODO make apt shell script for user. or docker image!
+
+* Things You'll Need (Prerequisites)
+- Docker (Desktop or CLI) -- we'll use the CLI here. https://www.docker.com
+- Git CLI https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+- GitHub CLI https://cli.github.com/manual/installation
+- Python 3.x https://www.python.org/downloads/
+- AWS CLI https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
+- AWS Elastic Beanstalk CLI https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html#eb-cli3-install.scripts
+
+* Main Steps
+- Fork this repo.
+- clone locally
+- Create an AWS RDS Postgres Database
+- Initialize an Elastic Beanstalk environment #TODO could probably pass everything in with flags
+- Configure GH Repo Secrets
+- Create a Dockerfile to build the example webapp
+- Commit/push your changes and watch the magic happen.
+
+* In-Depth
+- Fork this repo.
+
+- Clone it locally.
+
+- Create an AWS RDS Postgres Database
+
+  ``aws rds create-db-instance \
+    --db-instance-identifier twoge-db-instance \
+    --engine postgres \
+    --db-instance-class db.t3.micro \
+    --master-username postgres \
+    --master-user-password password \
+    --database-name twoge \
+    --allocated-storage 20 \``
+
+Feel free to change those, but make sure you change any references to the variables in your code!
+
+- In your project root, initialize an Elastic Beanstalk environment #TODO could probably pass everything in with flags
+  `eb init`
+follow the prompts to complete the setup. If a .gitignore file is automatically generated, either delete it or remove anything related to the .elasticbeanstalk folder from it.
+
+If you want to test your configuration from your local machine (you should!), you'll need to made a git commit before the elastic beanstalk cli will recognize your changes. Odd quirk, huh?
+
+- Configure GH Repo Secrets
+  - use the GH website or CLI to set your repository secrets. You will need to set:
+    *AWS Credentials*
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
+    - RDS_URI - The general syntax for a Uniform Resource Identifier (URI) is `postgresql://<user>:<password>@<host>:<port>/<default-db>`
+    - (optional) AWS_REGION
+    *DockerHub Credentials*
+    - DOCKERHUB_USERNAME
+    - DOCKERHUB_TOKEN - You can create one on DockerHub by clicking on your user > Account Settings > Security > Access Tokens
+
+If you're unsure where to get the values to place in any of those variables, give it a Goog.
+
+- Create a Dockerfile to build the example webapp
+  - Alpine base
+  - Python Flask
+  - copy app folder
+  - exec app.py when container starts
+- Build the workflow file
+  - from the project root, create .github/workflows/pipeline.yml
+  - Primarily using github actions made by GH/other users, we will:
+    - Checkout the repo
+    - set up docker buildx
+    - login to dockerhub
+    - build the docker image and push it to dockerhub
+    - install python
+    - install the awsebcli with pip
+    - configure our aws credentials
+    - initialize the Elastic Beanstalk environment (potentially not required?)
+    - create the EB app environment and deploy it on AWS
