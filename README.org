@@ -10,9 +10,9 @@ GitHub workflows are a powerful tool used to automate the application deployment
 
 Some of the benefits it provides:
 
-- **Increased Reliability:** By automating the deployment process, you can reduce the risk of errors being introduced into your application.
-- **Improved Efficiency:** GitHub workflows can help you to save time and effort by automating repetitive tasks.
-- **More Flexibility:** GitHub workflows allow you to customize the deployment process to meet your specific needs.
+- *Increased Reliability:* By automating the deployment process, you can reduce the risk of errors being introduced into your application.
+- *Improved Efficiency:* GitHub workflows can help you to save time and effort by automating repetitive tasks.
+- *More Flexibility:* GitHub workflows allow you to customize the deployment process to meet your specific needs.
 
 ** Some Downsides...
 If you're not a GitHub user, you won't be able to leverage these tools to build a pipeline.
